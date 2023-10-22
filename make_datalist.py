@@ -14,6 +14,7 @@ if __name__=="__main__":
     parser.add_argument("--dataset_dir", type=str, default="dataset")
     parser.add_argument("--train_filename", type=str, default="data/vctk_train_list.txt")
     parser.add_argument("--val_filename", type=str, default="data/vctk_val_list.txt")
+    parser.add_argument("--spk_info_filename", type=str, default="dataset/VCTK-Corpus/speaker-info.txt")
     parser.add_argument("--train_val_ratio", type=float, default=0.1)
     args = parser.parse_args()
 
@@ -22,6 +23,10 @@ if __name__=="__main__":
     speakers = [p.split("/")[-1] for p in dirs]
     trg_spks = random.sample(speakers, args.num_speakers)
     spk2idx = dict(zip(trg_spks, range(len(trg_spks))))
+
+    with open(args.spk_info_filename, "r") as file:
+        spk_info_list = file.readlines()
+    spk2gender = {f"p{info.split()[0]}": 0 if info.split()[2] == 'M' else 1 for i, info in enumerate(spk_info_list) if i != 0} # spk_id: gender
 
     files = glob.glob(os.path.join(args.dataset_dir, "**", "*.wav"), recursive=True)
     trg_files = []
@@ -36,7 +41,7 @@ if __name__=="__main__":
         cont_all = []
         for train_file in train_files:
             spk = train_file.split("/")[-2]
-            cont = f"{train_file}|{spk2idx[spk]}\n"
+            cont = f"{train_file}|{spk2gender[spk]}|{spk2idx[spk]}\n"
             cont_all.append(cont)
         file.writelines(cont_all)
 
@@ -44,6 +49,6 @@ if __name__=="__main__":
         cont_all = []
         for val_file in val_files:
             spk = val_file.split("/")[-2]
-            cont = f"{val_file}|{spk2idx[spk]}\n"
+            cont = f"{val_file}|{spk2gender[spk]}|{spk2idx[spk]}\n"
             cont_all.append(cont)
         file.writelines(cont_all)
